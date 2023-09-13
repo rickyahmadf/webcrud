@@ -1,0 +1,158 @@
+<?php
+
+if (!defined('BASEPATH'))
+    exit('No direct script access allowed');
+
+class Pembayaran extends CI_Controller
+{
+    function __construct()
+    {
+        parent::__construct();
+        $this->load->model('Mpembayaran');
+        $this->load->library('form_validation');
+    }
+
+    public function index()
+    {
+        $q = @urldecode($this->input->get('q', TRUE));
+        $start = intval($this->input->get('start'));
+        
+        if ($q <> '') {
+            $config['base_url'] = base_url() . 'pembayaran/index.html?q=' . urlencode($q);
+            $config['first_url'] = base_url() . 'pembayaran/index.html?q=' . urlencode($q);
+        } else {
+            $config['base_url'] = base_url() . 'pembayaran/index.html';
+            $config['first_url'] = base_url() . 'pembayaran/index.html';
+        }
+
+        $config['per_page'] = 10;
+        $config['page_query_string'] = TRUE;
+        $config['total_rows'] = $this->Mpembayaran->total_rows($q);
+        $pembayaran = $this->Mpembayaran->get_limit_data($config['per_page'], $start, $q);
+
+        $this->load->library('pagination');
+        $this->pagination->initialize($config);
+
+        $data = array(
+            'pembayaran_data' => $pembayaran,
+            'q' => $q,
+            'pagination' => $this->pagination->create_links(),
+            'total_rows' => $config['total_rows'],
+            'start' => $start,
+        );
+        $this->load->view('pembayaran/20_pembayaran_list', $data);
+    }
+
+    public function read($id) 
+    {
+        $row = $this->Mpembayaran->get_by_id($id);
+        if ($row) {
+            $data = array(
+		'id' => $row->id,
+		'jenis' => $row->jenis,
+		'keterangan' => $row->keterangan,
+	    );
+            $this->load->view('pembayaran/20_pembayaran_read', $data);
+        } else {
+            $this->session->set_flashdata('message', 'Record Not Found');
+            redirect(site_url('admin/pembayaran'));
+        }
+    }
+
+    public function create() 
+    {
+        $data = array(
+            'button' => 'Create',
+            'action' => site_url('admin/pembayaran/create_action'),
+	    'id' => set_value('id'),
+	    'jenis' => set_value('jenis'),
+	    'keterangan' => set_value('keterangan'),
+	);
+        $this->load->view('pembayaran/20_pembayaran_form', $data);
+    }
+    
+    public function create_action() 
+    {
+        $this->_rules();
+
+        if ($this->form_validation->run() == FALSE) {
+            $this->create();
+        } else {
+            $data = array(
+		'jenis' => $this->input->post('jenis',TRUE),
+		'keterangan' => $this->input->post('keterangan',TRUE),
+	    );
+
+            $this->Mpembayaran->insert($data);
+            $this->session->set_flashdata('message', 'Create Record Success');
+            redirect(site_url('admin/pembayaran'));
+        }
+    }
+    
+    public function update($id) 
+    {
+        $row = $this->Mpembayaran->get_by_id($id);
+
+        if ($row) {
+            $data = array(
+                'button' => 'Update',
+                'action' => site_url('admin/pembayaran/update_action'),
+		'id' => set_value('id', $row->id),
+		'jenis' => set_value('jenis', $row->jenis),
+		'keterangan' => set_value('keterangan', $row->keterangan),
+	    );
+            $this->load->view('pembayaran/20_pembayaran_form', $data);
+        } else {
+            $this->session->set_flashdata('message', 'Record Not Found');
+            redirect(site_url('admin/pembayaran'));
+        }
+    }
+    
+    public function update_action() 
+    {
+        $this->_rules();
+
+        if ($this->form_validation->run() == FALSE) {
+            $this->update($this->input->post('id', TRUE));
+        } else {
+            $data = array(
+		'jenis' => $this->input->post('jenis',TRUE),
+		'keterangan' => $this->input->post('keterangan',TRUE),
+	    );
+
+            $this->Mpembayaran->update($this->input->post('id', TRUE), $data);
+            $this->session->set_flashdata('message', 'Update Record Success');
+            redirect(site_url('admin/pembayaran'));
+        }
+    }
+    
+    public function delete($id) 
+    {
+        $row = $this->Mpembayaran->get_by_id($id);
+
+        if ($row) {
+            $this->Mpembayaran->delete($id);
+            $this->session->set_flashdata('message', 'Delete Record Success');
+            redirect(site_url('admin/pembayaran'));
+        } else {
+            $this->session->set_flashdata('message', 'Record Not Found');
+            redirect(site_url('admin/pembayaran'));
+        }
+    }
+
+    public function _rules() 
+    {
+	$this->form_validation->set_rules('jenis', 'jenis', 'trim|required');
+	$this->form_validation->set_rules('keterangan', 'keterangan', 'trim|required');
+
+	$this->form_validation->set_rules('id', 'id', 'trim');
+	$this->form_validation->set_error_delimiters('<span class="text-danger">', '</span>');
+    }
+
+}
+
+/* End of file Pembayaran.php */
+/* Location: ./application/controllers/Pembayaran.php */
+/* Please DO NOT modify this information : */
+/* Generated by Harviacode Codeigniter CRUD Generator 2023-07-05 09:36:33 */
+/* http://harviacode.com */
